@@ -26,7 +26,7 @@ public class PantallaJuegoSupervivencia implements Pantalla {
 	int maxDisparos;
 	double tiempoInicial;
 	double tiempoDeJuego;
-	Font fuenteTiempo;
+	Font fuente;
 	private DecimalFormat formatoDecimal;
 
 	// Imagenes
@@ -48,6 +48,7 @@ public class PantallaJuegoSupervivencia implements Pantalla {
 	int ultimoSegundoDisparado = -1;
 	int velocidad = 10;
 	int killStrike = 0;
+	int vidas=3;
 	// Variable para el panel:
 	PanelJuego panelJuego;
 
@@ -71,7 +72,7 @@ public class PantallaJuegoSupervivencia implements Pantalla {
 		// El tiempo de juego es cero
 		tiempoDeJuego = 0;
 		// La letra para pintar el tiempo
-		fuenteTiempo = new Font("MiLetra", Font.BOLD, 20);
+		fuente = new Font("MiLetra", Font.BOLD, 20);
 		// Formato decimal
 		formatoDecimal = new DecimalFormat("#.##");
 		tiempoInicial = System.nanoTime();
@@ -152,8 +153,9 @@ public class PantallaJuegoSupervivencia implements Pantalla {
 
 		// Pintamos el contador de tiempo:
 		g.setColor(Color.WHITE);
-		g.setFont(fuenteTiempo);
+		g.setFont(fuente);
 		g.drawString(formatoDecimal.format(tiempoDeJuego / 1000000000), 25, 25);
+		g.drawString("Vidas " + vidas, panelJuego.getWidth()-100, 25);
 	}
 
 	public void generarZombies() {
@@ -175,7 +177,8 @@ public class PantallaJuegoSupervivencia implements Pantalla {
 			int posX = panelJuego.getWidth();
 
 			creador = new SpriteZombie(nZombie, (tamañoPersonajesY * RASPECTO[nZombie]) / 1000000, tamañoPersonajesY,
-					posX, posY, velocidad - nZombie * 2, 90, imagenesZombie.get(nZombie), posicionCarril);
+					posX, posY, velocidad - nZombie * 2, 30 * (nZombie + 1), imagenesZombie.get(nZombie),
+					posicionCarril);
 			spritesZombie.add(creador);
 			ultimoSegundoZombies = intTiempoDeJuego;
 			velocidad++;
@@ -276,13 +279,21 @@ public class PantallaJuegoSupervivencia implements Pantalla {
 	public void colisiones() {
 		for (int i = 0; i < spritesZombie.size(); i++) {
 			if (spritesZombie.get(i).getPosX() + spritesZombie.get(i).getAncho() <= 0) {// por la izquierda
-				panelJuego.setPantallaActual(new PantallaFinal(panelJuego, tiempoDeJuego, killStrike));
+				vidas--;
+				spritesZombie.remove(i);
+				if (vidas<0) {
+					panelJuego.setPantallaActual(new PantallaFinal(panelJuego, tiempoDeJuego, killStrike));
+				}				
 			}
 			for (int j = 0; j < spritesDisparo.size(); j++) {
 				if (spritesDisparo.get(j).colisionan(spritesZombie.get(i))) {
+					spritesZombie.get(i).setVida(spritesZombie.get(i).getVida() - 30);
 					spritesDisparo.remove(j);
-					spritesZombie.remove(i);
-					killStrike++;
+					if (spritesZombie.get(i).getVida() <= 0) {
+						spritesZombie.remove(i);
+						killStrike++;
+					}
+
 					if (killStrike >= 35) {
 						panelJuego.setPantallaActual(new PantallaFinal(panelJuego, tiempoDeJuego));
 					}
